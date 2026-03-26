@@ -1,0 +1,144 @@
+{% extends 'core/base.html' %}
+
+{% block title %}首页 - 电影推荐系统{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- 欢迎区域 -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="bg-primary text-white p-5 rounded-3">
+                <h1 class="display-4">欢迎来到电影推荐系统</h1>
+                <p class="lead">基于混合推荐算法的智能电影推荐平台</p>
+                {% if not user.is_authenticated %}
+                <a href="{% url 'register' %}" class="btn btn-light btn-lg me-3">立即注册</a>
+                <a href="{% url 'movie_list' %}" class="btn btn-outline-light btn-lg">浏览电影</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 个性化推荐（登录用户） -->
+    {% if user.is_authenticated and recommended_movies %}
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="bi bi-stars text-warning"></i> 为您推荐</h2>
+            <div class="row">
+                {% for movie in recommended_movies %}
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+                    <div class="card movie-card h-100">
+                        <a href="{% url 'movie_detail' movie.id %}">
+                            {% if movie.poster %}
+                            <img src="{{ movie.poster.url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                            {% elif movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                            {% else %}
+                            <div class="card-img-top movie-poster bg-light d-flex align-items-center justify-content-center">
+                                <i class="bi bi-film text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                            {% endif %}
+                            {% if movie.douban_rating %}
+                            <span class="rating-badge">{{ movie.douban_rating|floatformat:1 }}</span>
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ movie.title }}</h6>
+                            <p class="card-text small text-muted">
+                                {{ movie.year }} · {{ movie.genre_names }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 热门电影 -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="bi bi-fire text-danger"></i> 热门电影</h2>
+            <div class="row">
+                {% for movie in popular_movies %}
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+                    <div class="card movie-card h-100">
+                        <a href="{% url 'movie_detail' movie.id %}">
+                            {% if movie.poster %}
+                            <img src="{{ movie.poster.url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                            {% elif movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                            {% else %}
+                            <div class="card-img-top movie-poster bg-light d-flex align-items-center justify-content-center">
+                                <i class="bi bi-film text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                            {% endif %}
+                            {% if movie.douban_rating %}
+                            <span class="rating-badge">{{ movie.douban_rating|floatformat:1 }}</span>
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ movie.title }}</h6>
+                            <p class="card-text small text-muted">
+                                {{ movie.year }} · {{ movie.genre_names }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 最新电影 -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="bi bi-clock text-info"></i> 最新电影</h2>
+            <div class="row">
+                {% for movie in new_movies %}
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-4">
+                    <div class="card movie-card h-100">
+                        <a href="{% url 'movie_detail' movie.id %}">
+                            {% if movie.poster %}
+                            <img src="{{ movie.poster.url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                            {% elif movie.poster_url %}
+                            <img src="{{ movie.poster_url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                            {% else %}
+                            <div class="card-img-top movie-poster bg-light d-flex align-items-center justify-content-center">
+                                <i class="bi bi-film text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                            {% endif %}
+                            {% if movie.douban_rating %}
+                            <span class="rating-badge">{{ movie.douban_rating|floatformat:1 }}</span>
+                            {% endif %}
+                        </a>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ movie.title }}</h6>
+                            <p class="card-text small text-muted">
+                                {{ movie.year }} · {{ movie.genre_names }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 电影类型导航 -->
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="bi bi-grid text-success"></i> 电影类型</h2>
+            <div class="row">
+                {% for genre in genres %}
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-3">
+                    <a href="{% url 'genre_detail' genre.id %}" class="btn btn-outline-secondary w-100">
+                        {{ genre.name }}
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

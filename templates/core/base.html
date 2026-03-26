@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}豆瓣电影推荐系统{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #007bff !important;
+        }
+        .movie-card {
+            transition: transform 0.3s;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .movie-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+        .movie-poster {
+            height: 300px;
+            object-fit: cover;
+            width: 100%;
+        }
+        .rating-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(255, 193, 7, 0.9);
+            color: #212529;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .footer {
+            background-color: #343a40;
+            color: #fff;
+            margin-top: 50px;
+        }
+        .star-rating {
+            color: #ffc107;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="bi bi-film"></i> 电影推荐系统
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'index' %}">
+                            <i class="bi bi-house"></i> 首页
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'movie_list' %}">
+                            <i class="bi bi-collection-play"></i> 全部电影
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'genre_list' %}">
+                            <i class="bi bi-tags"></i> 电影类型
+                        </a>
+                    </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'profile' %}">
+                            <i class="bi bi-person"></i> 个人中心
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <form class="d-flex me-3" action="{% url 'movie_list' %}" method="get">
+                    <input class="form-control me-2" type="search" name="q" placeholder="搜索电影..." value="{{ query|default:'' }}">
+                    <button class="btn btn-outline-primary" type="submit">搜索</button>
+                </form>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            {% if user.avatar %}
+                                <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="user-avatar">
+                            {% else %}
+                                <i class="bi bi-person-circle"></i>
+                            {% endif %}
+                            {{ user.nickname|default:user.username }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="bi bi-person"></i> 个人中心</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> 退出登录</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="btn btn-outline-primary me-2" href="{% url 'login' %}">登录</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary" href="{% url 'register' %}">注册</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 消息提示 -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- 主要内容 -->
+    <main class="py-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>豆瓣电影推荐系统</h5>
+                    <p>本科毕业设计项目 - 基于混合推荐算法的电影推荐系统</p>
+                    <p>使用 Django + MySQL + scikit-learn 构建</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>快速链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'index' %}" class="text-light text-decoration-none">首页</a></li>
+                        <li><a href="{% url 'movie_list' %}" class="text-light text-decoration-none">全部电影</a></li>
+                        <li><a href="{% url 'genre_list' %}" class="text-light text-decoration-none">电影类型</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>技术栈</h5>
+                    <ul class="list-unstyled">
+                        <li>Django 4.2</li>
+                        <li>MySQL</li>
+                        <li>Bootstrap 5</li>
+                        <li>scikit-learn</li>
+                        <li>jieba</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 豆瓣电影推荐系统 - 毕业设计项目</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script>
+        // AJAX评分
+        $(document).ready(function() {
+            $('.rating-form').on('submit', function(e) {
+                e.preventDefault();
+                const form = $(this);
+                const url = form.attr('action');
+                const data = form.serialize();
+                
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: data,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('评分成功！');
+                            location.reload();
+                        } else {
+                            alert('评分失败：' + JSON.stringify(response.errors));
+                        }
+                    },
+                    error: function() {
+                        alert('网络错误，请重试。');
+                    }
+                });
+            });
+            
+            // 收藏/取消收藏
+            $('.favorite-btn').on('click', function(e) {
+                e.preventDefault();
+                const btn = $(this);
+                const url = btn.attr('href');
+                
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            if (response.is_favorited) {
+                                btn.html('<i class="bi bi-heart-fill text-danger"></i> 已收藏');
+                                btn.removeClass('btn-outline-danger').addClass('btn-danger');
+                            } else {
+                                btn.html('<i class="bi bi-heart"></i> 收藏');
+                                btn.removeClass('btn-danger').addClass('btn-outline-danger');
+                            }
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
