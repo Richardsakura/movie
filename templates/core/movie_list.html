@@ -1,0 +1,206 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{% if query %}搜索: {{ query }}{% else %}全部电影{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- 侧边栏筛选 -->
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-funnel"></i> 筛选</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="{% url 'movie_list' %}">
+                        <!-- 搜索框 -->
+                        <div class="mb-3">
+                            <label for="search" class="form-label">搜索</label>
+                            <input type="text" class="form-control" id="search" name="q" 
+                                   value="{{ query|default:'' }}" placeholder="电影名、导演、演员...">
+                        </div>
+                        
+                        <!-- 类型筛选 -->
+                        <div class="mb-3">
+                            <label for="genre" class="form-label">类型</label>
+                            <select class="form-select" id="genre" name="genre">
+                                <option value="">全部类型</option>
+                                {% for genre in genres %}
+                                    <option value="{{ genre.id }}" {% if selected_genre == genre.id|stringformat:'i' %}selected{% endif %}> 
+                                        {{ genre.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- 年份筛选 -->
+                        <div class="mb-3">
+                            <label for="year" class="form-label">年份</label>
+                            <select class="form-select" id="year" name="year">
+                                <option value="">全部年份</option>
+                                {% for year in years %}
+                                    {% if year %}
+                                        <option value="{{ year }}" {% if selected_year == year|stringformat:'i' %}selected{% endif %}>
+                                            {{ year }}年
+                                        </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- 排序 -->
+                        <div class="mb-3">
+                            <label for="sort" class="form-label">排序</label>
+                            <select class="form-select" id="sort" name="sort">
+                                <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>评分最高</option>
+                                <option value="date" {% if sort_by == 'date' %}selected{% endif %}>最新上映</option>
+                                <option value="title" {% if sort_by == 'title' %}selected{% endif %}>名称排序</option>
+                            </select>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> 筛选
+                            </button>
+                            <a href="{% url 'movie_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> 重置
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 电影列表 -->
+        <div class="col-lg-9">
+            <!-- 标题和结果统计 -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        {% if query %}
+                            <i class="bi bi-search"></i> 搜索结果: "{{ query }}"
+                        {% else %}
+                            <i class="bi bi-film"></i> 全部电影
+                        {% endif %}
+                    </h2>
+                    <p class="text-muted mb-0">共找到 {{ page_obj.paginator.count }} 部电影</p>
+                </div>
+                <div>
+                    <a href="{% url 'index' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left"></i> 返回首页
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 电影网格 -->
+            {% if page_obj.object_list %}
+                <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
+                    {% for movie in page_obj.object_list %}
+                        <div class="col">
+                            <div class="card movie-card h-100">
+                                <a href="{% url 'movie_detail' movie.id %}">
+                                    <div class="position-relative">
+                                        {% if movie.poster %}
+                                            <img src="{{ movie.poster.url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                                        {% elif movie.poster_url %}
+                                            <img src="{{ movie.poster_url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                                        {% else %}
+                                            <div class="movie-poster bg-secondary d-flex align-items-center justify-content-center">
+                                                <i class="bi bi-film text-white" style="font-size: 3rem;"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="rating-badge">
+                                            {{ movie.douban_rating|default:'-' }}
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <a href="{% url 'movie_detail' movie.id %}" class="text-decoration-none text-dark">
+                                            {{ movie.title }}
+                                        </a>
+                                    </h5>
+                                    <p class="card-text text-muted small">
+                                        <i class="bi bi-calendar"></i> {{ movie.year|default:'-' }}
+                                        <span class="mx-2">|</span>
+                                        <i class="bi bi-flag"></i> {{ movie.country|default:'未知' }}
+                                    </p>
+                                    <p class="card-text small">
+                                        <i class="bi bi-tags"></i>
+                                        {{ movie.genre_names|truncatechars:30 }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                            {{ movie.douban_rating|default:'-' }}分
+                                        </small>
+                                        <a href="{% url 'movie_detail' movie.id %}" class="btn btn-sm btn-outline-primary">
+                                            详情 <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- 分页 -->
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-5">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_genre %}&genre={{ selected_genre }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                                        上一页
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">上一页</span>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if selected_genre %}&genre={{ selected_genre }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_genre %}&genre={{ selected_genre }}{% endif %}{% if selected_year %}&year={{ selected_year }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}">
+                                        下一页
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">下一页</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-film" style="font-size: 5rem; color: #6c757d;"></i>
+                    </div>
+                    <h3 class="text-muted">没有找到电影</h3>
+                    <p class="text-muted">尝试不同的搜索词或筛选条件</p>
+                    <a href="{% url 'movie_list' %}" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-clockwise"></i> 查看全部电影
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
