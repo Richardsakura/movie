@@ -1,0 +1,48 @@
+{% extends 'core/base.html' %}
+
+{% block title %}电影类型{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-tags"></i> 电影类型</h2>
+                <a href="{% url 'movie_list' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-film"></i> 浏览全部电影
+                </a>
+            </div>
+            
+            <div class="row">
+                {% for genre in genres %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <h5 class="card-title">{{ genre.name }}</h5>
+                                <p class="text-muted small">{{ genre.description|default:'暂无描述' }}</p>
+                                <p class="card-text">
+                                    <span class="badge bg-primary">{{ genre.movie_count }} 部电影</span>
+                                </p>
+                                <a href="{% url 'genre_detail' genre.id %}" class="btn btn-outline-primary btn-sm">
+                                    查看详情 <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            {% if not genres %}
+                <div class="text-center py-5">
+                    <i class="bi bi-tags text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">暂无电影类型</h4>
+                    <p class="text-muted">电影类型将在添加电影后自动创建</p>
+                    <a href="{% url 'movie_list' %}" class="btn btn-primary mt-2">
+                        浏览电影 <i class="bi bi-arrow-right"></i>
+                    </a>
+                </极速赛车5
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

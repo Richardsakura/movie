@@ -1,0 +1,128 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ genre.name }} - 电影类型{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 面包屑导航 -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">首页</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'genre_list' %}">电影类型</a></li>
+            <li class="breadcrumb-item active">{{ genre.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <h1 class="display-6">{{ genre.name }}</h1>
+                    {% if genre.description %}
+                        <p class="lead text-muted">{{ genre.description }}</p>
+                    {% endif %}
+                    <p class="text-muted">
+                        <i class="bi bi-film"></i> 共 {{ page_obj.paginator.count }} 部电影
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 电影列表 -->
+    <div class="row">
+        {% for movie in page_obj.object_list %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card movie-card h-100">
+                    <a href="{% url 'movie_detail' movie.id %}">
+                        <div class="position-relative">
+                            {% if movie.poster %}
+                                <img src="{{ movie.poster.url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                            {% elif movie.poster_url %}
+                                <img src="{{ movie.poster_url }}" class="card-img-top movie-poster" alt="{{ movie.title }}">
+                            {% else %}
+                                <div class="movie-poster bg-secondary d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-film text-white" style="font-size: 3rem;"></i>
+                                </div>
+                            {% endif %}
+                            <div class="rating-badge">
+                                {{ movie.douban_rating|default:'-' }}
+                            </div>
+                        </div>
+                    </a>
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <a href="{% url 'movie_detail' movie.id %}" class="text-decoration-none text-dark">
+                                {{ movie.title }}
+                            </a>
+                        </h6>
+                        <p class="card-text text-muted small">
+                            <i class="bi bi-calendar"></i> {{ movie.year|default:'-' }}
+                            <span class="mx-2">|</span>
+                            <i class="bi bi-flag"></i> {{ movie.country|default:'未知' }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                {{ movie.douban_rating|default:'-' }}分
+                            </small>
+                            <a href="{% url 'movie_detail' movie.id %}" class="btn btn-sm btn-outline-primary">
+                                详情 <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-film text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">此类型暂无电影</h4>
+                    <a href="{% url 'movie_list' %}" class="btn btn-primary mt-2">
+                        浏览其他电影 <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- 分页 -->
+    {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-5">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">上一页</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">上一页</span>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">下一页</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">下一页</span>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}

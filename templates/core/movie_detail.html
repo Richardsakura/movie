@@ -1,0 +1,252 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ movie.title }} - 电影详情{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 面包屑导航 -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">首页</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'movie_list' %}">全部电影</a></li>
+            <li class="breadcrumb-item active">{{ movie.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- 电影海报和基本信息 -->
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="position-relative">
+                    {% if movie.poster %}
+                        <img src="{{ movie.poster.url }}" class="card-img-top" alt="{{ movie.title }}">
+                    {% elif movie.poster_url %}
+                        <img src="{{ movie.poster_url }}" class="card-img-top" alt="{{ movie.title }}">
+                    {% else %}
+                        <div class="bg-secondary d-flex align-items-center justify-content-center" style="height: 400px;">
+                            <i class="bi bi-film text-white" style="font-size: 5rem;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="position-absolute top-0 end-0 m-3">
+                        <span class="badge bg-warning text-dark fs-6">
+                            {{ movie.douban_rating|default:'-' }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- 评分和收藏按钮 -->
+                    {% if user.is_authenticated %}
+                        <div class="d-grid gap-2 mb-3">
+                            <!-- 收藏按钮 -->
+                            <a href="{% url 'toggle_favorite' movie.id %}" 
+                               class="btn {% if is_favorited %}btn-danger{% else %}btn-outline-danger{% endif %} favorite-btn">
+                                <i class="bi {% if is_favorited %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                                {% if is_favorited %}已收藏{% else %}收藏{% endif %}
+                            </a>
+                            
+                            <!-- 评分按钮 -->
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ratingModal">
+                                <i class="bi bi-star-fill"></i>
+                                {% if user_rating %}修改评分{% else %}我要评分{% endif %}
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="d-grid gap-2 mb-3">
+                            <a href="{% url 'login' %}" class="btn btn-outline-primary">
+                                登录后评分和收藏
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- 电影基本信息 -->
+                    <div class="movie-info">
+                        <h5 class="card-title">{{ movie.title }}</h5>
+                        {% if movie.original_title %}
+                            <p class="text-muted">{{ movie.original_title }}</p>
+                        {% endif %}
+                        
+                        <div class="movie-details">
+                            <p><strong><i class="bi bi-calendar"></i> 年份:</strong> {{ movie.year|default:'-' }}</p>
+                            <p><strong><i class="bi bi-clock"></i> 片长:</strong> {{ movie.duration|default:'-' }}分钟</p>
+                            <p><strong><i class="bi bi-flag"></i> 国家:</strong> {{ movie.country|default:'未知' }}</p>
+                            <p><strong><i class="bi bi-translate"></i> 语言:</strong> {{ movie.language|default:'未知' }}</p>
+                            <p><strong><i class="bi bi-person-video"></i> 导演:</strong> {{ movie.directors|default:'未知' }}</p>
+                            <p><strong><i class="bi bi-tags"></i> 类型:</strong> {{ movie.genre_names|default:'未知' }}</p>
+                            <p><strong><i class="bi bi-star-fill text-warning"></i> 豆瓣评分:</strong> 
+                                {{ movie.douban_rating|default:'-' }} ({{ movie.douban_votes }}人评价)
+                            </p>
+                            {% if movie.imdb_rating %}
+                                <p><strong><i class="bi bi-star-fill text-warning"></i> IMDB评分:</strong> {{ movie.imdb_rating }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 电影详情和评论 -->
+        <div class="col-md-8">
+            <!-- 剧情简介 -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-journal-text"></i> 剧情简介</h5>
+                </div>
+                <div class="card-body">
+                    {% if movie.plot %}
+                        <p class="card-text">{{ movie.plot|linebreaks }}</p>
+                    {% else %}
+                        <p class="text-muted">暂无剧情简介</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 演员信息 -->
+            {% if movie.actors %}
+                <div class="card shadow mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-people"></i> 演员阵容</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ movie.actors }}</p>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- 评分统计 -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-star"></i> 评分统计</h5>
+                </div>
+                <div class="card-body">
+                    {% if rating_stats.total_ratings > 0 %}
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <h3 class="text-primary">{{ rating_stats.avg_score|floatformat:1 }}</h3>
+                                <p class="text-muted">平均评分</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h3 class="text-success">{{ rating_stats.total_ratings }}</h3>
+                                <p class="text-muted">评分人数</p>
+                            </div>
+                            <div class="col-md-4">
+                                <h3 class="text-warning">{{ movie.douban_rating|default:'-' }}</h3>
+                                <p class="text-muted">豆瓣评分</p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">暂无评分数据</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- 最新评论 -->
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-chat-text"></i> 最新评论</h5>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'add_review' movie.id %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil"></i> 发表评论
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                        {% for review in reviews %}
+                            <div class="review-item mb-3 pb-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ review.title }}</h6>
+                                        <p class="text-muted small mb-1">
+                                            <i class="bi bi-person"></i> {{ review.user.nickname|default:review.user.username }}
+                                            <span class="mx-2">|</span>
+                                            <i class="bi bi-calendar"></i> {{ review.created_at|date:'Y-m-d' }}
+                                            <span class="mx-2">|</span>
+                                            <i class="bi bi-star-fill text-warning"></i> {{ review.rating }}
+                                        </p>
+                                    </div>
+                                    {% if review.likes > 0 %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-hand-thumbs-up"></i> {{ review.likes }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <p class="mb-0">{{ review.content|truncatewords:30 }}</p>
+                                <a href="#" class="small">阅读全文</a>
+                            </div>
+                        {% endfor %}
+                        
+                        {% if reviews|length > 5 %}
+                            <div class="text-center mt-3">
+                                <a href="#" class="btn btn-outline-primary btn-sm">
+                                    查看全部评论 <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted text-center">暂无评论</p>
+                        {% if user.is_authenticated %}
+                            <div class="text-center">
+                                <a href="{% url 'add_review' movie.id %}" class="btn btn-primary">
+                                    <i class="bi bi-pencil"></i> 成为第一个评论的人
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 评分模态框 -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="ratingModal" tabindex="-1" aria-labelledby="ratingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ratingModalLabel">
+                    <i class="bi bi-star-fill"></i> 为《{{ movie.title }}》评分
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'rate_movie' movie.id %}" class="rating-form">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_score" class="form-label">评分 (0-10分)</label>
+                        <input type="number" name="score" id="id_score" class="form-control" 
+                               min="0" max="10" step="0.1" value="{{ user_rating.score|default:'8.0' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_comment" class="form-label">短评 (可选)</label>
+                        <textarea name="comment" id="id_comment" class="form-control" rows="3" 
+                                  placeholder="写下你的观影感受...">{{ user_rating.comment|default:'' }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">提交评分</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // 评分模态框显示时设置当前评分
+        $('#ratingModal').on('show.bs.modal', function() {
+            {% if user_rating %}
+                $('#id_score').val({{ user_rating.score }});
+                $('#id_comment').val('{{ user_rating.comment|default:'' }}');
+            {% endif %}
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

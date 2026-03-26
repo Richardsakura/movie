@@ -1,0 +1,168 @@
+{% extends 'core/base.html' %}
+
+{% block title %}发表评论 - {{ movie.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- 面包屑导航 -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">首页</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'movie_list' %}">全部电影</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'movie_detail' movie.id %}">{{ movie.title }}</a></li>
+            <li class="breadcrumb-item active">发表评论</li>
+        </ol>
+    </nav>
+    
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="bi bi-pencil"></i> 为《{{ movie.title }}》发表评论
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- 电影基本信息 -->
+                    <div class="movie-info mb-4 p-3 bg-light rounded">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                {% if movie.poster %}
+                                    <img src="{{ movie.poster.url }}" class="img-fluid rounded" alt="{{ movie.title }}">
+                                {% elif movie.poster_url %}
+                                    <img src="{{ movie.poster_url }}" class="img-fluid rounded" alt="{{ movie.title }}">
+                                {% else %}
+                                    <div class="bg-secondary d-flex align-items-center justify-content-center rounded" style="height: 120px;">
+                                        <i class="bi bi-film text-white" style="font-size: 2rem;"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-9">
+                                <h5>{{ movie.title }}</h5>
+                                {% if movie.original_title %}
+                                    <p class="text-muted">{{ movie.original_title }}</p>
+                                {% endif %}
+                                <p class="mb-1">
+                                    <i class="bi bi-calendar"></i> {{ movie.year|default:'-' }}
+                                    <span class="mx-2">|</span>
+                                    <i class="bi bi-tags"></i> {{ movie.genre_names }}
+                                </p>
+                                <p class="mb-0">
+                                    <i class="bi bi-star-fill text-warning"></i> 
+                                    豆瓣评分: {{ movie.douban_rating|default:'-' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 评论表单 -->
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">
+                                <i class="bi bi-chat-quote"></i> 评论标题 *
+                            </label>
+                            <input type="text" name="title" id="id_title" 
+                                   class="form-control {% if form.title.errors %}is-invalid{% endif %}" 
+                                   value="{{ form.title.value|default:'' }}" 
+                                   placeholder="请输入评论标题" required>
+                            {% if form.title.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.title.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_content" class="form-label">
+                                <i class="bi bi-journal-text"></i> 评论内容 *
+                            </label>
+                            <textarea name="content" id="id_content" 
+                                      class="form-control {% if form.content.errors %}is-invalid{% endif %}" 
+                                      rows="8" placeholder="请详细描述您的观影感受..." required>{{ form.content.value|default:'' }}</textarea>
+                            {% if form.content.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.content.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                评论内容应不少于100字，可以包含剧情分析、人物评价、个人感受等
+                            </small>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_rating" class="form-label">
+                                        <i class="bi bi-star-fill"></i> 评分 *
+                                    </label>
+                                    <input type="number" name="rating" id="id_rating" 
+                                           class="form-control {% if form.rating.errors %}is-invalid{% endif %}" 
+                                           min="0" max="10" step="0.1" 
+                                           value="{{ form.rating.value|default:'8.0' }}" required>
+                                    {% if form.rating.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.rating.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        请给出0-10分的评分，10分为满分
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'movie_detail' movie.id %}" class="btn btn-secondary me-md-2">
+                                <i class="bi bi-arrow-left"></i> 返回电影详情
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-send"></i> 发表评论
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 评论指南 -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> 评论指南</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check text-success"></i> 请确保评论内容真实、客观</li>
+                        <li><i class="bi bi-check text-success"></i> 避免剧透关键情节，可设置剧透警告</li>
+                        <li><i class="bi bi-check text-success"></i> 尊重他人观点，文明交流</li>
+                        <li><i class="bi bi-check text-success"></i> 请勿发布广告、违法或不当内容</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // 实时显示评分
+        $('#id_rating').on('input', function() {
+            const rating = $(this).val();
+            $('.rating-display').text(rating);
+        });
+        
+        // 字符计数
+        $('#id_content').on('input', function() {
+            const length = $(this).val().length;
+            $('.char-count').text(length);
+            if (length < 100) {
+                $('.char-count').addClass('text-danger').removeClass('text-success');
+            } else {
+                $('.char-count').addClass('text-success').removeClass('text-danger');
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
